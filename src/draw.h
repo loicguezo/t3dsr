@@ -11,4 +11,4 @@ void renderCanvas(int width, int height);
 void clearCanvas(int width, int height);
 void freeCanvas(void);
 
-#endif // DRAW_H
+#endif  // DRAW_H

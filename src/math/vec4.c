@@ -1,31 +1,31 @@
 #include "vec4.h"
 
-#include <math.h>
 #include <float.h>
+#include <math.h>
 
 #ifdef SIMD_X86
-    #include <xmmintrin.h>
+#include <xmmintrin.h>
 #elif defined(SIMD_ARCH)
-    #include <arm_neon.h>
+#include <arm_neon.h>
 #endif
 
-
-Vec4f_t vec4f(float x, float y, float z, float w) 
+Vec4f_t vec4f(float x, float y, float z, float w)
 {
     return (Vec4f_t){.x = x, .y = y, .z = z, .w = w};
 }
 
-Vec4f_t vec4f_from_array(const float *__restrict val)
+Vec4f_t vec4f_from_array(const float* __restrict val)
 {
     Vec4f_t vec;
-#if defined (SIMD_X86)
+#if defined(SIMD_X86)
     __m128 arr = _mm_load_ps(val);
     _mm_store_ps(vec.data, arr);
-#elif defined (SIMD_ARCH)
+#elif defined(SIMD_ARCH)
     float32x4_t arr = vld1q_f32(val);
     vst1q_f32(vec.data, arr);
 #else
-    for(int i = 0; i<VEC_SIZE; i++) {
+    for (int i = 0; i < VEC_SIZE; i++)
+    {
         vec.data[i] = val[i];
     }
 #endif
@@ -48,33 +48,32 @@ Vec4f_t vec4f_scalar(float f)
 
 // add one by one each value to their specific address
 #else
-    for (int i = 0; i < VEC_SIZE; i++) {
+    for (int i = 0; i < VEC_SIZE; i++)
+    {
         vec4.data[i] = f;
     }
 #endif
     return vec4;
 }
 
-Vec4f_t vec4f_zero(void)
-{
-    return vec4f_scalar(0.f);
-}
+Vec4f_t vec4f_zero(void) { return vec4f_scalar(0.f); }
 
-Vec4f_t* vec4f_add_r(Vec4f_t *__restrict out, Vec4f_t a)
+Vec4f_t* vec4f_add_ip(Vec4f_t* __restrict out, Vec4f_t a)
 {
-#if defined (SIMD_X86)
+#if defined(SIMD_X86)
     __m128 va = _mm_load_ps(a.data);
     __m128 vb = _mm_load_ps(out->data);
     __m128 vres = _mm_add_ps(va, vb);
     _mm_store_ps(out->data, vres);
 
-#elif defined (SIMD_ARCH)
+#elif defined(SIMD_ARCH)
     float32x4_t va = vld1q_f32(a.data);
     float32x4_t vb = vld1q_f32(out->data);
     float32x4_t vres = vaddq_f32(va, vb);
     vst1q_f32(out->data, vres);
 #else
-    for(int i = 0; i<VEC_SIZE; i++) {
+    for (int i = 0; i < VEC_SIZE; i++)
+    {
         out->data[i] += a.data[i];
     }
 #endif
@@ -83,26 +82,27 @@ Vec4f_t* vec4f_add_r(Vec4f_t *__restrict out, Vec4f_t a)
 
 Vec4f_t vec4f_add(Vec4f_t a, Vec4f_t b)
 {
-    vec4f_add_r(&a, b);
+    vec4f_add_ip(&a, b);
     return a;
 }
 
-Vec4f_t* vec4f_sub_r(Vec4f_t *__restrict out, Vec4f_t a)
+Vec4f_t* vec4f_sub_ip(Vec4f_t* __restrict out, Vec4f_t a)
 {
-#if defined (SIMD_X86)   
+#if defined(SIMD_X86)
     __m128 va = _mm_load_ps(out->data);
     __m128 vb = _mm_load_ps(a.data);
     __m128 vres = _mm_sub_ps(va, vb);
     _mm_store_ps(out->data, vres);
 
-#elif defined (SIMD_ARCH)
+#elif defined(SIMD_ARCH)
     float32x4_t va = vld1q_f32(out->data);
     float32x4_t vb = vld1q_f32(a.data);
     float32x4_t vres = vsubq_f32(va, vb);
     vst1q_f32(out->data, vres);
 
 #else
-    for(int i = 0; i<VEC_SIZE; i++) {
+    for (int i = 0; i < VEC_SIZE; i++)
+    {
         out->data[i] -= a.data[i];
     }
 #endif
@@ -111,25 +111,26 @@ Vec4f_t* vec4f_sub_r(Vec4f_t *__restrict out, Vec4f_t a)
 
 Vec4f_t vec4f_sub(Vec4f_t a, Vec4f_t b)
 {
-    vec4f_sub_r(&a, b);
+    vec4f_sub_ip(&a, b);
     return a;
 }
 
-Vec4f_t* vec4f_scale_r(Vec4f_t *__restrict out, float scalar)
+Vec4f_t* vec4f_scale_ip(Vec4f_t* __restrict out, float scalar)
 {
-#if defined (SIMD_X86)
+#if defined(SIMD_X86)
     __m128 va = _mm_load_ps(out->data);
     __m128 vb = _mm_set1_ps(scalar);
     __m128 vres = _mm_mul_ps(va, vb);
     _mm_store_ps(out->data, vres);
 
-#elif defined (SIMD_ARCH)
+#elif defined(SIMD_ARCH)
     float32x4_t va = vld1q_f32(out->data);
     float32x4_t vb = vdupq_n_f32(scalar);
     float32x4_t vres = vmulq_f32(va, vb);
     vst1q_f32(out->data, vres);
 #else
-    for(int i = 0; i<4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         out->data[i] *= scalar;
     }
 #endif
@@ -138,74 +139,71 @@ Vec4f_t* vec4f_scale_r(Vec4f_t *__restrict out, float scalar)
 
 Vec4f_t vec4f_scale(Vec4f_t a, float scalar)
 {
-    vec4f_scale_r(&a, scalar);
+    vec4f_scale_ip(&a, scalar);
     return a;
 }
 
 float vec4f_dot(Vec4f_t a, Vec4f_t b)
 {
-#if defined (SIMD_X86)
+#if defined(SIMD_X86)
     __m128 va = _mm_load_ps(a.data);
     __m128 vb = _mm_load_ps(b.data);
     __m128 vmul = _mm_mul_ps(va, vb);
 
-    __m128 shuf = _mm_shuffle_ps(vmul, vmul, _MM_SHUFFLE(2, 3, 0, 1)); // [y, y, w, w]
-    __m128 sum = _mm_add_ps(vmul, shuf); // [x+y, y+y, z+w, w+w]
+    __m128 shuf =
+        _mm_shuffle_ps(vmul, vmul, _MM_SHUFFLE(2, 3, 0, 1));  // [y, y, w, w]
+    __m128 sum = _mm_add_ps(vmul, shuf);  // [x+y, y+y, z+w, w+w]
 
-    shuf = _mm_movehl_ps(shuf, sum); // [z+w, w+w, w, w]
-    sum = _mm_add_ss(sum, shuf); // [x+y+z+w, y+y, z+w, w+w]
+    shuf = _mm_movehl_ps(shuf, sum);  // [z+w, w+w, w, w]
+    sum = _mm_add_ss(sum, shuf);      // [x+y+z+w, y+y, z+w, w+w]
 
-    return _mm_cvtss_f32(sum); 
-    
-#elif defined (SIMD_ARCH)
+    return _mm_cvtss_f32(sum);
+
+#elif defined(SIMD_ARCH)
     float32x4_t va = vld1q_f32(a.data);
     float32x4_t vb = vld1q_f32(b.data);
-    
+
     float32x4_t vmul = vmulq_f32(va, vb);
     float32x2_t sum_pair = vadd_f32(vget_low_f32(vmul), vget_high_f32(vmul));
     float32x2_t final_sum = vpadd_f32(sum_pair, sum_pair);
-    
+
     return vget_lane_f32(final_sum, 0);
 #else
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 #endif
 }
 
-float vec4f_len(Vec4f_t v)
-{
-    return sqrtf(vec4f_dot(v, v));
-}
+float vec4f_len(Vec4f_t v) { return sqrtf(vec4f_dot(v, v)); }
 
-
-Vec4f_t* vec4f_norm_r(Vec4f_t *__restrict v)
+Vec4f_t* vec4f_norm_ip(Vec4f_t* __restrict v)
 {
     float length = vec4f_len(*v);
     if (length < FLT_EPSILON) *v = vec4f_zero();
-    vec4f_scale_r(v, 1.f / length);
+    vec4f_scale_ip(v, 1.f / length);
     return v;
 }
 
 Vec4f_t vec4f_norm(Vec4f_t v)
 {
-    vec4f_norm_r(&v);
+    vec4f_norm_ip(&v);
     return v;
 }
 
-Vec4f_t* vec4f_lerp_r(Vec4f_t *__restrict a, Vec4f_t b, float t)
+Vec4f_t* vec4f_lerp_ip(Vec4f_t* __restrict a, Vec4f_t b, float t)
 {
     t = fmaxf(0.f, fminf(t, 1.f));
-    
+
     a->x += t * (b.x - a->x);
     a->y += t * (b.y - a->y);
     a->z += t * (b.z - a->z);
     a->w += t * (b.w - a->w);
-    
+
     return a;
 }
 
 Vec4f_t vec4f_lerp(Vec4f_t a, Vec4f_t b, float t)
 {
-    vec4f_lerp_r(&a, b, t);
+    vec4f_lerp_ip(&a, b, t);
     return a;
 }
 
@@ -214,9 +212,7 @@ float vec4f_angle(Vec4f_t a, Vec4f_t b)
     float lenA = vec4f_len(a);
     float lenB = vec4f_len(b);
 
-    if (isnan(lenA) || isnan(lenB)
-        || lenA < FLT_EPSILON
-        || lenB < FLT_EPSILON)
+    if (isnan(lenA) || isnan(lenB) || lenA < FLT_EPSILON || lenB < FLT_EPSILON)
         return NAN;
 
     float dot = vec4f_dot(a, b);
@@ -226,7 +222,6 @@ float vec4f_angle(Vec4f_t a, Vec4f_t b)
 
     return acosf(cosTheta);
 }
-
 
 Vec4f_t vec4f_proj(Vec4f_t a, Vec4f_t b)
 {
@@ -252,7 +247,7 @@ float vec4f_dist(Vec4f_t a, Vec4f_t b)
     return rlt;
 }
 
-Vec4f_t* vec4f_cross_r(Vec4f_t* __restrict out, Vec4f_t a, Vec4f_t b)
+Vec4f_t* vec4f_cross_ip(Vec4f_t* __restrict out, Vec4f_t a, Vec4f_t b)
 {
     out->x = a.y * b.z - a.z * b.y;
     out->y = a.z * b.x - a.x * b.z;
@@ -264,6 +259,6 @@ Vec4f_t* vec4f_cross_r(Vec4f_t* __restrict out, Vec4f_t a, Vec4f_t b)
 Vec4f_t vec4f_cross(Vec4f_t a, Vec4f_t b)
 {
     Vec4f_t out;
-    vec4f_cross_r(&out, a, b);
+    vec4f_cross_ip(&out, a, b);
     return out;
 }
